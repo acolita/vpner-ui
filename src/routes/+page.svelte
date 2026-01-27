@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { useVPNs } from '$lib/stores/vpns.svelte';
 	import { onVisibilityChange } from '$lib/utils/visibility';
 	import VPNCard from '$lib/components/VPNCard.svelte';
-	import { RefreshCw, Plus, Shield } from 'lucide-svelte';
+	import ImportModal from '$lib/components/ImportModal.svelte';
+	import { RefreshCw, Plus, Shield, Upload } from 'lucide-svelte';
 
 	const vpnStore = useVPNs();
 	let cleanupVisibility: (() => void) | null = null;
+	let showImportModal = $state(false);
 
 	onMount(() => {
 		vpnStore.startPolling(5000);
@@ -21,6 +24,14 @@
 		vpnStore.stopPolling();
 		cleanupVisibility?.();
 	});
+
+	function handleImport(data: any) {
+		// Navigate to new VPN page with imported data
+		const params = new URLSearchParams();
+		params.set('import', JSON.stringify(data));
+		goto(`/vpn/new?${params.toString()}`);
+		showImportModal = false;
+	}
 </script>
 
 <div class="space-y-6">
@@ -34,6 +45,13 @@
 				title="Refresh"
 			>
 				<RefreshCw class="h-5 w-5 {vpnStore.loading ? 'animate-spin' : ''}" />
+			</button>
+			<button
+				onclick={() => (showImportModal = true)}
+				class="flex items-center gap-1 rounded-lg border px-3 py-2 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+			>
+				<Upload class="h-4 w-4" />
+				Import
 			</button>
 			<a
 				href="/vpn/new"
@@ -69,3 +87,5 @@
 		</div>
 	{/if}
 </div>
+
+<ImportModal open={showImportModal} onClose={() => (showImportModal = false)} onImport={handleImport} />
