@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { Save, Trash2 } from 'lucide-svelte';
-	import type { VPNProfile, Route, DNSEntry } from '$lib/types';
+	import type { VPNProfile, Route, DNSEntry, AliasEntry } from '$lib/types';
 	import RouteEditor from './RouteEditor.svelte';
 	import DNSEditor from './DNSEditor.svelte';
+	import AliasEditor from './AliasEditor.svelte';
 	import OpenFortiFields from './OpenFortiFields.svelte';
 	import OpenVPNFields from './OpenVPNFields.svelte';
 
@@ -20,8 +21,10 @@
 	let provider = $state<'openfortivpn' | 'openvpn'>(profile?.provider ?? 'openfortivpn');
 	let enabled = $state(profile?.enabled ?? true);
 	let autoConnect = $state(profile?.auto_connect ?? false);
+	let otpRequired = $state(profile?.otp_required ?? false);
 	let routes = $state<Route[]>(profile?.routes ?? []);
 	let dns = $state<DNSEntry[]>(profile?.dns ?? []);
+	let aliases = $state<AliasEntry[]>(profile?.aliases ?? []);
 
 	// Provider-specific state
 	let fortiConfig = $state({
@@ -80,8 +83,10 @@
 			provider,
 			enabled,
 			auto_connect: autoConnect,
+			otp_required: otpRequired,
 			routes,
-			dns
+			dns,
+			aliases
 		};
 
 		if (provider === 'openfortivpn') {
@@ -151,7 +156,7 @@
 				</select>
 			</div>
 
-			<div class="flex items-center gap-6">
+			<div class="flex flex-wrap items-center gap-6">
 				<label class="flex items-center gap-2">
 					<input type="checkbox" bind:checked={enabled} class="rounded" />
 					<span class="text-sm">Enabled</span>
@@ -160,6 +165,11 @@
 				<label class="flex items-center gap-2">
 					<input type="checkbox" bind:checked={autoConnect} class="rounded" />
 					<span class="text-sm">Auto-connect on startup</span>
+				</label>
+
+				<label class="flex items-center gap-2">
+					<input type="checkbox" bind:checked={otpRequired} class="rounded" />
+					<span class="text-sm">Requires OTP</span>
 				</label>
 			</div>
 		</div>
@@ -182,6 +192,15 @@
 	<div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
 		<h2 class="mb-4 text-lg font-semibold">DNS Entries</h2>
 		<DNSEditor bind:entries={dns} />
+	</div>
+
+	<!-- Aliases -->
+	<div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+		<h2 class="mb-4 text-lg font-semibold">Endpoint Aliases</h2>
+		<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
+			Create friendly DNS names for VPN endpoints (e.g., grafana.{name || 'profile'}.acolita.local)
+		</p>
+		<AliasEditor bind:aliases />
 	</div>
 
 	<!-- Actions -->

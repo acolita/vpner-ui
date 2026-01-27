@@ -3,6 +3,7 @@ export interface VPNProfile {
 	provider: 'openfortivpn' | 'openvpn';
 	enabled: boolean;
 	auto_connect: boolean;
+	otp_required: boolean;
 	routes: Route[];
 	dns: DNSEntry[];
 	proxy: ProxyEntry[];
