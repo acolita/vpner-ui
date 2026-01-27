@@ -58,7 +58,7 @@
 		preview = null;
 
 		try {
-			const response = await api.post('/api/vpns/import/preview', {
+			const response = await api.post('/vpns/import/preview', {
 				content: content,
 				provider: provider === 'auto' ? '' : provider,
 				name: profileName
