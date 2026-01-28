@@ -269,16 +269,8 @@
 				<p>
 					<span class="font-medium text-gray-900 dark:text-white">vpner</span> is a Linux daemon for managing multiple VPN connections with selective routing, DNS integration, and health monitoring.
 				</p>
-				<p class="flex items-center gap-2">
-					<span>Documentation:</span>
-					<a
-						href="https://github.com/acolita/vpner"
-						target="_blank"
-						rel="noopener noreferrer"
-						class="text-blue-600 hover:underline"
-					>
-						github.com/acolita/vpner
-					</a>
+				<p>
+					Version: 0.1.x
 				</p>
 			</div>
 		</div>

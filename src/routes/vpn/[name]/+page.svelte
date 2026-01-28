@@ -215,7 +215,7 @@
 						<dd class="font-mono">{status.interface}</dd>
 					</div>
 				{/if}
-				{#if status?.started_at}
+				{#if status?.started_at && isConnected}
 					<div>
 						<dt class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
 							<Clock class="h-3 w-3" />

@@ -8,7 +8,7 @@
 		baseDomain?: string;
 	}
 
-	let { aliases, profileName, baseDomain = 'acolita.local' }: Props = $props();
+	let { aliases, profileName, baseDomain = 'vpner.local' }: Props = $props();
 
 	function getFullDomain(alias: AliasEntry): string {
 		return `${alias.name}.${profileName}.${baseDomain}`;

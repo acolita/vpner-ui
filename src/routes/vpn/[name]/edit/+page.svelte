@@ -13,13 +13,21 @@
 	const toast = useToast();
 
 	let profile = $state<VPNProfile | null>(null);
+	let profiles = $state<VPNProfile[]>([]);
 	let loading = $state(true);
 	let saving = $state(false);
 	let showDeleteConfirm = $state(false);
 
+	const availableProfiles = $derived(profiles.map((p) => p.name));
+
 	onMount(async () => {
 		try {
-			profile = await api.get<VPNProfile>(`/vpns/${vpnName}`);
+			const [p, allProfiles] = await Promise.all([
+				api.get<VPNProfile>(`/vpns/${vpnName}`),
+				api.get<VPNProfile[]>('/vpns')
+			]);
+			profile = p;
+			profiles = allProfiles ?? [];
 		} catch (err: unknown) {
 			const apiError = err as { message?: string };
 			toast.error(apiError.message ?? 'Failed to load profile');
@@ -74,6 +82,7 @@
 	{:else if profile}
 		<ProfileForm
 			{profile}
+			{availableProfiles}
 			onSave={handleSave}
 			onDelete={() => (showDeleteConfirm = true)}
 			{saving}

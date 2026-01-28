@@ -24,8 +24,8 @@
 				<input
 					bind:value={alias.name}
 					type="text"
-					placeholder="grafana"
-					title="Alias name (e.g., grafana)"
+					placeholder="myapp"
+					title="Alias name (e.g., myapp)"
 					class="flex-1 rounded-lg border p-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-700"
 				/>
 				<input

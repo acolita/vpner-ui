@@ -51,6 +51,7 @@
 					id="username"
 					type="text"
 					placeholder="admin"
+					autocomplete="username"
 					bind:value={username}
 					disabled={loading}
 					class="w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
@@ -64,6 +65,7 @@
 					id="password"
 					type="password"
 					placeholder="Password"
+					autocomplete="current-password"
 					bind:value={password}
 					disabled={loading}
 					class="w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white"

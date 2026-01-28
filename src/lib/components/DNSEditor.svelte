@@ -17,17 +17,27 @@
 	}
 
 	function getEntryType(entry: DNSEntry): 'static' | 'forward' {
-		return entry.server ? 'forward' : 'static';
+		// Check for server field - treat empty string as not set
+		return entry.server != null && entry.server !== '' ? 'forward' : 'static';
 	}
 
-	function setEntryType(entry: DNSEntry, type: 'static' | 'forward') {
+	function setEntryType(index: number, type: 'static' | 'forward') {
+		const entry = entries[index];
 		if (type === 'static') {
-			entry.address = entry.server ?? '';
+			// Moving to static: copy server to address, clear server
+			entry.address = entry.server ?? entry.address ?? '';
 			entry.server = undefined;
 		} else {
-			entry.server = entry.address ?? '';
+			// Moving to forward: copy address to server, clear address
+			entry.server = entry.address ?? entry.server ?? '';
 			entry.address = undefined;
 		}
+		// Force reactivity by reassigning the array
+		entries = [...entries];
+	}
+
+	function isForwardType(entry: DNSEntry): boolean {
+		return entry.server != null && entry.server !== '';
 	}
 </script>
 
@@ -44,14 +54,14 @@
 				value={getEntryType(entry)}
 				onchange={(e) => {
 					const target = e.target as HTMLSelectElement;
-					setEntryType(entry, target.value as 'static' | 'forward');
+					setEntryType(i, target.value as 'static' | 'forward');
 				}}
 				class="rounded-lg border p-2 dark:border-gray-600 dark:bg-gray-700"
 			>
 				<option value="static">Static IP</option>
 				<option value="forward">Forward</option>
 			</select>
-			{#if entry.server !== undefined}
+			{#if isForwardType(entry)}
 				<input
 					bind:value={entry.server}
 					type="text"

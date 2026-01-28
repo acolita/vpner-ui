@@ -1,20 +1,25 @@
 <script lang="ts">
 	import { Save, Trash2 } from 'lucide-svelte';
-	import type { VPNProfile, Route, DNSEntry, AliasEntry } from '$lib/types';
+	import type { VPNProfile, Route, DNSEntry, AliasEntry, ProxyEntry, HealthCheckConfig, ScheduleConfig, FailoverConfig } from '$lib/types';
 	import RouteEditor from './RouteEditor.svelte';
 	import DNSEditor from './DNSEditor.svelte';
 	import AliasEditor from './AliasEditor.svelte';
+	import ProxyEditor from './ProxyEditor.svelte';
+	import HealthCheckEditor from './HealthCheckEditor.svelte';
+	import ScheduleEditor from './ScheduleEditor.svelte';
+	import FailoverEditor from './FailoverEditor.svelte';
 	import OpenFortiFields from './OpenFortiFields.svelte';
 	import OpenVPNFields from './OpenVPNFields.svelte';
 
 	interface Props {
 		profile?: VPNProfile;
+		availableProfiles?: string[];
 		onSave: (profile: Partial<VPNProfile>) => Promise<void>;
 		onDelete?: () => void;
 		saving?: boolean;
 	}
 
-	let { profile, onSave, onDelete, saving = false }: Props = $props();
+	let { profile, availableProfiles = [], onSave, onDelete, saving = false }: Props = $props();
 
 	// Form state
 	let name = $state(profile?.name ?? '');
@@ -25,6 +30,10 @@
 	let routes = $state<Route[]>(profile?.routes ?? []);
 	let dns = $state<DNSEntry[]>(profile?.dns ?? []);
 	let aliases = $state<AliasEntry[]>(profile?.aliases ?? []);
+	let proxy = $state<ProxyEntry[]>(profile?.proxy ?? []);
+	let healthCheck = $state<HealthCheckConfig | null>(profile?.health_check ?? null);
+	let schedule = $state<ScheduleConfig | null>(profile?.schedule ?? null);
+	let failover = $state<FailoverConfig | null>(profile?.failover ?? null);
 
 	// Provider-specific state
 	let fortiConfig = $state({
@@ -86,7 +95,11 @@
 			otp_required: otpRequired,
 			routes,
 			dns,
-			aliases
+			aliases,
+			proxy,
+			health_check: healthCheck ?? undefined,
+			schedule: schedule ?? undefined,
+			failover: failover ?? undefined
 		};
 
 		if (provider === 'openfortivpn') {
@@ -198,9 +211,40 @@
 	<div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
 		<h2 class="mb-4 text-lg font-semibold">Endpoint Aliases</h2>
 		<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
-			Create friendly DNS names for VPN endpoints (e.g., grafana.{name || 'profile'}.acolita.local)
+			Create friendly DNS names for VPN endpoints (e.g., myapp.{name || 'profile'}.vpner.local)
 		</p>
 		<AliasEditor bind:aliases />
+	</div>
+
+	<!-- Proxy Domains -->
+	<div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+		<h2 class="mb-4 text-lg font-semibold">Proxy Domains</h2>
+		<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
+			Route specific domains through VPN via SNI/HTTP proxy. Use exclusions (!) to bypass proxy for
+			specific subdomains.
+		</p>
+		<ProxyEditor bind:entries={proxy} />
+	</div>
+
+	<!-- Health Check -->
+	<div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+		<h2 class="mb-4 text-lg font-semibold">Health Check</h2>
+		<HealthCheckEditor bind:config={healthCheck} />
+	</div>
+
+	<!-- Schedule -->
+	<div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+		<h2 class="mb-4 text-lg font-semibold">Schedule</h2>
+		<ScheduleEditor bind:config={schedule} />
+	</div>
+
+	<!-- Failover -->
+	<div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+		<h2 class="mb-4 text-lg font-semibold">Failover</h2>
+		<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
+			Automatically switch to a backup profile when health checks fail.
+		</p>
+		<FailoverEditor bind:config={failover} {availableProfiles} currentProfile={name} />
 	</div>
 
 	<!-- Actions -->
