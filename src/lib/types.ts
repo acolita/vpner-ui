@@ -227,3 +227,59 @@ export interface LocalDNSEntry {
 	description?: string;
 	enabled: boolean;
 }
+
+// Settings types
+export interface Setting {
+	key: string;
+	value: string;
+	value_type: 'string' | 'int' | 'bool' | 'duration';
+	category: string;
+	updated_at: string;
+}
+
+export interface SettingsByCategory {
+	[category: string]: Setting[];
+}
+
+export interface SettingsUpdate {
+	[key: string]: string | number | boolean;
+}
+
+// Admin user types
+export interface AdminUser {
+	id: number;
+	username: string;
+	roles: string[];
+	vpns: string[];
+	created_at: string;
+	updated_at: string;
+	last_login?: string;
+}
+
+export interface CreateAdminUserRequest {
+	username: string;
+	password: string;
+	roles?: string[];
+	vpns?: string[];
+}
+
+export interface UpdateAdminUserRequest {
+	username?: string;
+	roles?: string[];
+	vpns?: string[];
+}
+
+export interface ChangePasswordRequest {
+	password: string;
+}
+
+// Setup types
+export interface SetupStatus {
+	setup_required: boolean;
+	message?: string;
+}
+
+export interface SetupCompleteRequest {
+	username: string;
+	password: string;
+}
