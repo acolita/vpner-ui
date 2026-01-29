@@ -102,10 +102,11 @@ export interface FailoverConfig {
 }
 
 export interface ScheduleConfig {
-	enabled: boolean;
-	connect_at?: string;
-	disconnect_at?: string;
-	days?: string[];
+	enabled?: boolean;
+	connect_at?: string;   // HH:MM format
+	disconnect_at?: string; // HH:MM format
+	days?: string[];       // Day names: Mon, Tue, Wed, Thu, Fri, Sat, Sun
+	timezone?: string;
 }
 
 export interface LoginResponse {

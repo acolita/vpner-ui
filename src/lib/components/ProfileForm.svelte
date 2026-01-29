@@ -71,12 +71,12 @@
 		}
 
 		if (provider === 'openfortivpn') {
-			if (!fortiConfig.host && !fortiConfig.config_path) {
-				errors.host = 'Host or config file is required';
+			if (!fortiConfig.host) {
+				errors.host = 'Host is required';
 			}
 		} else {
-			if (!openvpnConfig.remote && !openvpnConfig.config_path) {
-				errors.remote = 'Remote or config file is required';
+			if (!openvpnConfig.remote) {
+				errors.remote = 'Remote host is required';
 			}
 		}
 

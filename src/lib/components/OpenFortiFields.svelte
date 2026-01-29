@@ -6,7 +6,6 @@
 			username: string;
 			password: string;
 			trusted_cert: string;
-			config_path: string;
 		};
 		errors: Record<string, string>;
 	}
@@ -18,20 +17,6 @@
 	<h2 class="mb-4 text-lg font-semibold">openfortivpn Configuration</h2>
 
 	<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-		<div>
-			<label for="forti-config-path" class="mb-1 block text-sm font-medium">Config File</label>
-			<input
-				id="forti-config-path"
-				bind:value={config.config_path}
-				type="text"
-				placeholder="/etc/openfortivpn/profile.conf"
-				class="w-full rounded-lg border p-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-700"
-			/>
-			<p class="mt-1 text-xs text-gray-500">Or specify individual fields below</p>
-		</div>
-
-		<div></div>
-
 		<div>
 			<label for="forti-host" class="mb-1 block text-sm font-medium">Host</label>
 			<input

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Network, Clock, Route, Key, AlertTriangle } from 'lucide-svelte';
+	import { Network, Clock, Route, Key, AlertTriangle, Calendar } from 'lucide-svelte';
 	import StatusBadge from './StatusBadge.svelte';
 	import HealthIndicator from './HealthIndicator.svelte';
 	import ConnectButton from './ConnectButton.svelte';
@@ -25,6 +25,17 @@
 	const routeCount = $derived(profile.routes?.length ?? 0);
 	const hasOTP = $derived(status?.otp_required ?? false);
 	const hasFailover = $derived(status?.failover_active ?? false);
+	const hasSchedule = $derived(profile.schedule?.enabled ?? false);
+	const scheduleInfo = $derived(() => {
+		if (!profile.schedule) return null;
+		const parts = [];
+		if (profile.schedule.connect_at) parts.push(`↑${profile.schedule.connect_at}`);
+		if (profile.schedule.disconnect_at) parts.push(`↓${profile.schedule.disconnect_at}`);
+		if (profile.schedule.days?.length) {
+			parts.push(profile.schedule.days.join(', '));
+		}
+		return parts.join(' ') || 'Scheduled';
+	});
 
 	async function handleConnect() {
 		// If OTP is required, show OTP modal first instead of calling connect
@@ -107,6 +118,13 @@
 			{#if hasOTP}
 				<div class="flex items-center gap-1 text-orange-500" title="OTP required">
 					<Key class="h-4 w-4" />
+				</div>
+			{/if}
+
+			{#if hasSchedule}
+				<div class="flex items-center gap-1 text-blue-500" title="Scheduled: {scheduleInfo()}">
+					<Calendar class="h-4 w-4" />
+					<span class="text-xs">{scheduleInfo()}</span>
 				</div>
 			{/if}
 

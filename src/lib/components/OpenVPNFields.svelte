@@ -10,7 +10,6 @@
 			ca: string;
 			cert: string;
 			key: string;
-			config_path: string;
 		};
 		errors: Record<string, string>;
 	}
@@ -22,22 +21,6 @@
 	<h2 class="mb-4 text-lg font-semibold">OpenVPN Configuration</h2>
 
 	<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-		<div>
-			<label for="ovpn-config-path" class="mb-1 block text-sm font-medium"
-				>Config File (.ovpn)</label
-			>
-			<input
-				id="ovpn-config-path"
-				bind:value={config.config_path}
-				type="text"
-				placeholder="/etc/openvpn/client.ovpn"
-				class="w-full rounded-lg border p-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-700"
-			/>
-			<p class="mt-1 text-xs text-gray-500">Or specify individual fields below</p>
-		</div>
-
-		<div></div>
-
 		<div>
 			<label for="ovpn-remote" class="mb-1 block text-sm font-medium">Remote Host</label>
 			<input

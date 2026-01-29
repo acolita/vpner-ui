@@ -3,6 +3,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { useAuth } from '$lib/auth.svelte';
+	import { api } from '$lib/api';
 	import { onMount } from 'svelte';
 	import { Home, Settings, Shield, LogOut, Route, Globe, Moon, Sun } from 'lucide-svelte';
 	import Toast from '$lib/components/Toast.svelte';
@@ -12,16 +13,35 @@
 	const auth = useAuth();
 
 	let darkMode = $state(false);
+	let setupChecked = $state(false);
+	let setupRequired = $state(false);
 
-	onMount(() => {
+	onMount(async () => {
 		auth.checkAuth();
 		darkMode = document.documentElement.classList.contains('dark');
+
+		// Check if setup is required
+		try {
+			const status = await api.getSetupStatus();
+			setupRequired = status.setup_required;
+		} catch {
+			// If we can't check, assume setup is not required
+			setupRequired = false;
+		}
+		setupChecked = true;
 	});
 
-	// Redirect to login if not authenticated (after loading completes)
+	// Redirect to setup or login if not authenticated (after loading completes)
 	$effect(() => {
-		if (!auth.loading && !auth.authenticated && $page.url.pathname !== '/login') {
-			goto('/login');
+		if (!auth.loading && setupChecked && !auth.authenticated) {
+			const pathname = $page.url.pathname;
+			if (pathname !== '/login' && pathname !== '/setup') {
+				if (setupRequired) {
+					goto('/setup');
+				} else {
+					goto('/login');
+				}
+			}
 		}
 	});
 
@@ -31,7 +51,7 @@
 		localStorage.setItem('theme', darkMode ? 'dark' : 'light');
 	}
 
-	const isLoginPage = $derived($page.url.pathname === '/login');
+	const isLoginPage = $derived($page.url.pathname === '/login' || $page.url.pathname === '/setup');
 </script>
 
 <Toast />

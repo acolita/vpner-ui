@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* Enable class-based dark mode (use .dark class instead of prefers-color-scheme) */
+@variant dark (&:where(.dark, .dark *));
+
 :root {
 	--color-brand-50: #eff6ff;
 	--color-brand-100: #dbeafe;
