@@ -123,6 +123,7 @@ export interface User {
 export interface ApiError {
 	message: string;
 	status: number;
+	isConnectionError?: boolean;
 }
 
 export interface RouteHealthReport {

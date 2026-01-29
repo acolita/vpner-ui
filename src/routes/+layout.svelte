@@ -7,6 +7,7 @@
 	import { onMount } from 'svelte';
 	import { Home, Settings, Shield, LogOut, Route, Globe, Moon, Sun } from 'lucide-svelte';
 	import Toast from '$lib/components/Toast.svelte';
+	import BackendStatus from '$lib/components/BackendStatus.svelte';
 
 	let { children } = $props();
 
@@ -55,6 +56,7 @@
 </script>
 
 <Toast />
+<BackendStatus />
 
 {#if isLoginPage}
 	{@render children()}

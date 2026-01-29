@@ -11,8 +11,10 @@ import type {
 	SetupStatus,
 	SetupCompleteRequest
 } from './types';
+import { useConnection, isBackendUnavailable, getBackendErrorMessage } from './stores/connection.svelte';
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+const connection = useConnection();
 
 class VpnerApi {
 	private token: string | null = null;
@@ -61,7 +63,15 @@ class VpnerApi {
 
 	// Settings API
 	async getSettings(): Promise<SettingsByCategory> {
-		return this.get<SettingsByCategory>('/settings');
+		// API returns { categories: [{ category, settings }] }, transform to { [category]: settings }
+		const response = await this.get<{ categories: Array<{ category: string; settings: Setting[] }> | null }>('/settings');
+		const result: SettingsByCategory = {};
+		if (response.categories) {
+			for (const cat of response.categories) {
+				result[cat.category] = cat.settings;
+			}
+		}
+		return result;
 	}
 
 	async getSettingsByCategory(category: string): Promise<Setting[]> {
@@ -69,7 +79,18 @@ class VpnerApi {
 	}
 
 	async updateSettings(settings: SettingsUpdate): Promise<void> {
-		await this.put('/settings', settings);
+		// Transform flat object format to array format expected by backend
+		const settingsArray = Object.entries(settings).map(([key, value]) => {
+			const parts = key.split('.');
+			const category = parts[0];
+			return {
+				key,
+				value: String(value),
+				category,
+				value_type: typeof value === 'boolean' ? 'bool' : 'string'
+			};
+		});
+		await this.put('/settings', { settings: settingsArray });
 	}
 
 	async exportSettings(): Promise<string> {
@@ -144,14 +165,32 @@ class VpnerApi {
 			headers['Authorization'] = `Bearer ${this.token}`;
 		}
 
-		const res = await fetch(`${API_BASE}${path}`, {
-			method,
-			headers,
-			body: body ? JSON.stringify(body) : undefined
-		});
+		let res: Response;
+		try {
+			res = await fetch(`${API_BASE}${path}`, {
+				method,
+				headers,
+				body: body ? JSON.stringify(body) : undefined
+			});
+		} catch (err) {
+			// Network error - backend unreachable
+			if (isBackendUnavailable(err)) {
+				connection.setDisconnected(getBackendErrorMessage(err));
+			}
+			throw { message: getBackendErrorMessage(err), status: 0, isConnectionError: true } as ApiError;
+		}
 
 		if (!res.ok) {
 			const error: ApiError = { message: res.statusText, status: res.status };
+
+			// Check for backend unavailable status codes
+			if (isBackendUnavailable(error)) {
+				connection.setDisconnected(getBackendErrorMessage(error));
+				error.message = getBackendErrorMessage(error);
+				(error as ApiError & { isConnectionError: boolean }).isConnectionError = true;
+				throw error;
+			}
+
 			try {
 				const data = await res.json();
 				error.message = data.error ?? data.message ?? res.statusText;
@@ -160,6 +199,9 @@ class VpnerApi {
 			}
 			throw error;
 		}
+
+		// Backend is responding - mark as connected
+		connection.setConnected();
 
 		// Handle empty responses
 		const text = await res.text();

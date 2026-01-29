@@ -1,13 +1,15 @@
 <script lang="ts">
-	import { AlertTriangle } from 'lucide-svelte';
+	import { AlertTriangle, Loader2 } from 'lucide-svelte';
 
 	interface Props {
 		open: boolean;
 		title: string;
 		message: string;
 		confirmText?: string;
+		loadingText?: string;
 		confirmClass?: string;
-		onConfirm: () => void;
+		loading?: boolean;
+		onConfirm: () => void | Promise<void>;
 		onCancel: () => void;
 	}
 
@@ -16,10 +18,27 @@
 		title,
 		message,
 		confirmText = 'Confirm',
+		loadingText = 'Processing...',
 		confirmClass = 'bg-blue-600 hover:bg-blue-700',
+		loading = false,
 		onConfirm,
 		onCancel
 	}: Props = $props();
+
+	// Local state to track request in flight (guards against double-click)
+	let requestInFlight = $state(false);
+
+	const isLoading = $derived(loading || requestInFlight);
+
+	async function handleConfirm() {
+		if (requestInFlight) return;
+		requestInFlight = true;
+		try {
+			await onConfirm();
+		} finally {
+			requestInFlight = false;
+		}
+	}
 </script>
 
 {#if open}
@@ -49,12 +68,22 @@
 			<div class="flex justify-end gap-2">
 				<button
 					onclick={onCancel}
-					class="rounded-lg border px-4 py-2 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700"
+					disabled={isLoading}
+					class="rounded-lg border px-4 py-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:hover:bg-gray-700"
 				>
 					Cancel
 				</button>
-				<button onclick={onConfirm} class="rounded-lg px-4 py-2 text-white {confirmClass}">
-					{confirmText}
+				<button
+					onclick={handleConfirm}
+					disabled={isLoading}
+					class="flex items-center gap-2 rounded-lg px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50 {confirmClass}"
+				>
+					{#if isLoading}
+						<Loader2 class="h-4 w-4 animate-spin" />
+						{loadingText}
+					{:else}
+						{confirmText}
+					{/if}
 				</button>
 			</div>
 		</div>

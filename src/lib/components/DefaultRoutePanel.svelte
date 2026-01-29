@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api';
 	import type { DefaultRouteStatus, RouteHistoryEvent } from '$lib/types';
-	import { Shield, Save, RotateCcw, Clock, AlertTriangle, CheckCircle, Activity } from 'lucide-svelte';
+	import { Shield, Save, RotateCcw, Clock, AlertTriangle, CheckCircle, Activity, Info, Loader2 } from 'lucide-svelte';
 	import { useToast } from '$lib/stores/toast.svelte';
 
 	const toast = useToast();
@@ -10,7 +10,8 @@
 	let status = $state<DefaultRouteStatus | null>(null);
 	let history = $state<RouteHistoryEvent[]>([]);
 	let loading = $state(true);
-	let actionLoading = $state(false);
+	let actionLoading = $state<'capture' | 'restore' | null>(null);
+	let notEnabled = $state(false);
 
 	const isProtected = $derived(
 		status?.saved_route &&
@@ -19,6 +20,7 @@
 
 	async function refresh() {
 		loading = true;
+		notEnabled = false;
 		try {
 			const [s, h] = await Promise.all([
 				api.get<DefaultRouteStatus>('/routes/default'),
@@ -28,14 +30,20 @@
 			history = h ?? [];
 		} catch (err: unknown) {
 			const apiError = err as { message?: string };
-			toast.error(apiError.message ?? 'Failed to load default route status');
+			// Check if feature is not enabled
+			if (apiError.message?.includes('not enabled')) {
+				notEnabled = true;
+			} else {
+				toast.error(apiError.message ?? 'Failed to load default route status');
+			}
 		} finally {
 			loading = false;
 		}
 	}
 
 	async function capture() {
-		actionLoading = true;
+		if (actionLoading) return;
+		actionLoading = 'capture';
 		try {
 			await api.post('/routes/default/capture');
 			toast.success('Default route captured');
@@ -44,12 +52,13 @@
 			const apiError = err as { message?: string };
 			toast.error(apiError.message ?? 'Failed to capture default route');
 		} finally {
-			actionLoading = false;
+			actionLoading = null;
 		}
 	}
 
 	async function restore() {
-		actionLoading = true;
+		if (actionLoading) return;
+		actionLoading = 'restore';
 		try {
 			await api.post('/routes/default/restore');
 			toast.success('Default route restored');
@@ -58,7 +67,7 @@
 			const apiError = err as { message?: string };
 			toast.error(apiError.message ?? 'Failed to restore default route');
 		} finally {
-			actionLoading = false;
+			actionLoading = null;
 		}
 	}
 
@@ -160,19 +169,29 @@
 			<div class="mt-4 flex gap-2">
 				<button
 					onclick={capture}
-					disabled={actionLoading}
-					class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+					disabled={!!actionLoading}
+					class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
 				>
-					<Save class="h-4 w-4" />
-					Capture Current
+					{#if actionLoading === 'capture'}
+						<Loader2 class="h-4 w-4 animate-spin" />
+						Capturing...
+					{:else}
+						<Save class="h-4 w-4" />
+						Capture Current
+					{/if}
 				</button>
 				<button
 					onclick={restore}
-					disabled={actionLoading || !status.saved_route}
-					class="flex items-center gap-2 rounded-lg border px-4 py-2 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:hover:bg-gray-700"
+					disabled={!!actionLoading || !status.saved_route}
+					class="flex items-center gap-2 rounded-lg border px-4 py-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:hover:bg-gray-700"
 				>
-					<RotateCcw class="h-4 w-4" />
-					Restore Saved
+					{#if actionLoading === 'restore'}
+						<Loader2 class="h-4 w-4 animate-spin" />
+						Restoring...
+					{:else}
+						<RotateCcw class="h-4 w-4" />
+						Restore Saved
+					{/if}
 				</button>
 			</div>
 		</div>
@@ -212,6 +231,27 @@
 				</div>
 			</div>
 		{/if}
+	</div>
+{:else if notEnabled}
+	<div class="rounded-lg bg-blue-50 p-6 dark:bg-blue-900/20">
+		<div class="flex items-start gap-3">
+			<Info class="mt-0.5 h-5 w-5 text-blue-500" />
+			<div>
+				<h3 class="font-medium text-blue-900 dark:text-blue-100">Default Route Monitoring Not Enabled</h3>
+				<p class="mt-1 text-sm text-blue-700 dark:text-blue-300">
+					This feature monitors your default network route and can automatically restore it if a VPN connection
+					changes it unexpectedly.
+				</p>
+				<p class="mt-2 text-sm text-blue-600 dark:text-blue-400">
+					To enable, add the following to your config.yaml:
+				</p>
+				<pre class="mt-2 rounded bg-blue-100 p-2 text-xs text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">daemon:
+  default_route:
+    enabled: true
+    auto_restore: true
+    check_interval: 10s</pre>
+			</div>
+		</div>
 	</div>
 {:else}
 	<div class="py-8 text-center text-gray-500">Unable to load default route status.</div>
