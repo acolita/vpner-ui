@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Network, CheckCircle, XCircle, ExternalLink } from 'lucide-svelte';
+	import { Network, CheckCircle, XCircle, ExternalLink, Ban } from 'lucide-svelte';
 	import type { RouteEntry } from '$lib/types';
 
 	interface Props {
@@ -56,16 +56,26 @@
 									>Device</th
 								>
 								<th class="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500"
+									>Enabled</th
+								>
+								<th class="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500"
 									>Active</th
 								>
 							</tr>
 						</thead>
 						<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 							{#each profileRoutes as route}
-								<tr>
+								<tr class:opacity-50={route.enabled === false}>
 									<td class="px-4 py-2 font-mono text-sm">{route.cidr}</td>
 									<td class="px-4 py-2 text-sm">{route.priority ?? 100}</td>
 									<td class="px-4 py-2 font-mono text-sm text-gray-500">{route.device ?? '-'}</td>
+									<td class="px-4 py-2">
+										{#if route.enabled === false}
+											<Ban class="h-4 w-4 text-amber-500" />
+										{:else}
+											<CheckCircle class="h-4 w-4 text-green-500" />
+										{/if}
+									</td>
 									<td class="px-4 py-2">
 										{#if route.active}
 											<CheckCircle class="h-4 w-4 text-green-500" />

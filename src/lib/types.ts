@@ -62,6 +62,7 @@ export interface ConnectionStatus {
 export interface Route {
 	cidr: string;
 	priority?: number;
+	enabled?: boolean;
 }
 
 export interface DNSEntry {
@@ -179,6 +180,7 @@ export interface RouteEntry {
 	priority: number;
 	device?: string;
 	active: boolean;
+	enabled?: boolean;
 }
 
 export interface SystemRouteComparison {

@@ -9,7 +9,7 @@
 	let { routes = $bindable() }: Props = $props();
 
 	function addRoute() {
-		routes = [...routes, { cidr: '', priority: 100 }];
+		routes = [...routes, { cidr: '', priority: 100, enabled: true }];
 	}
 
 	function removeRoute(index: number) {

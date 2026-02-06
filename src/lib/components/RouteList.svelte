@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CheckCircle, XCircle } from 'lucide-svelte';
+	import { CheckCircle, XCircle, Ban } from 'lucide-svelte';
 	import type { Route } from '$lib/types';
 
 	interface Props {
@@ -38,13 +38,21 @@
 			</thead>
 			<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 				{#each routes as route (route.cidr)}
-					<tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+					<tr
+						class="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+						class:opacity-50={route.enabled === false}
+					>
 						<td class="px-4 py-2 font-mono text-sm">{route.cidr}</td>
 						<td class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
 							{route.priority ?? 100}
 						</td>
 						<td class="px-4 py-2">
-							{#if isConnected}
+							{#if route.enabled === false}
+								<div class="flex items-center gap-1 text-amber-500 dark:text-amber-400">
+									<Ban class="h-4 w-4" />
+									<span class="text-xs">Disabled</span>
+								</div>
+							{:else if isConnected}
 								<div class="flex items-center gap-1 text-green-600 dark:text-green-400">
 									<CheckCircle class="h-4 w-4" />
 									<span class="text-xs">Active</span>
