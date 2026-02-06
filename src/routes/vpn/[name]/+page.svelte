@@ -5,7 +5,7 @@
 	import { onVisibilityChange } from '$lib/utils/visibility';
 	import { connect, disconnect, submitOTP } from '$lib/services/connection';
 	import { useToast } from '$lib/stores/toast.svelte';
-	import type { VPNProfile, ConnectionStatus } from '$lib/types';
+	import type { VPNProfile, ConnectionStatus, Route } from '$lib/types';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import HealthIndicator from '$lib/components/HealthIndicator.svelte';
 	import ConnectButton from '$lib/components/ConnectButton.svelte';
@@ -20,11 +20,12 @@
 		Settings,
 		RefreshCw,
 		Network,
-		Route,
+		Route as RouteIcon,
 		Globe,
 		Link,
 		Clock,
-		Hash
+		Hash,
+		Loader2
 	} from 'lucide-svelte';
 
 	const vpnName = $derived($page.params.name ?? '');
@@ -37,7 +38,9 @@
 	let pollInterval: ReturnType<typeof setInterval> | null = null;
 	let cleanupVisibility: (() => void) | null = null;
 	let showOTP = $state(false);
+	let showSyncOTP = $state(false);
 	let connecting = $state(false);
+	let syncing = $state(false);
 
 	async function fetchData() {
 		try {
@@ -135,7 +138,48 @@
 		}
 	}
 
+	async function handleSyncRoutes() {
+		if (profile?.otp_required) {
+			showSyncOTP = true;
+			return;
+		}
+		syncing = true;
+		try {
+			await api.post(`/vpns/${vpnName}/sync-routes`);
+			toast.success('Routes synced successfully');
+			await fetchData();
+		} catch (err: unknown) {
+			const apiError = err as { message?: string };
+			toast.error(apiError.message ?? 'Failed to sync routes');
+		} finally {
+			syncing = false;
+		}
+	}
+
+	async function handleSyncOTPSubmit(token: string) {
+		await api.post(`/vpns/${vpnName}/sync-routes`, { otp: token });
+		showSyncOTP = false;
+		toast.success('Routes synced successfully');
+		await fetchData();
+	}
+
+	function handleSyncOTPCancel() {
+		showSyncOTP = false;
+	}
+
 	const isConnected = $derived(status?.status === 'connected');
+	const effectiveRoutes = $derived.by(() => {
+		const manual = profile?.routes ?? [];
+		const discovered = profile?.discovered_routes ?? [];
+		const manualCIDRs = new Set(manual.map((r: Route) => r.cidr));
+		const effective = [...manual];
+		for (const route of discovered) {
+			if (!manualCIDRs.has(route.cidr) && route.enabled !== false) {
+				effective.push(route);
+			}
+		}
+		return effective;
+	});
 </script>
 
 <div class="space-y-6">
@@ -268,12 +312,28 @@
 
 		<!-- Routes -->
 		<div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-			<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold">
-				<Route class="h-5 w-5 text-gray-500" />
-				Routes
-				<span class="text-sm font-normal text-gray-500">({profile.routes?.length ?? 0})</span>
-			</h2>
-			<RouteList routes={profile.routes ?? []} vpnInterface={status?.interface} />
+			<div class="mb-4 flex items-center justify-between">
+				<h2 class="flex items-center gap-2 text-lg font-semibold">
+					<RouteIcon class="h-5 w-5 text-gray-500" />
+					Routes
+					<span class="text-sm font-normal text-gray-500">({effectiveRoutes.length})</span>
+				</h2>
+				<button
+					onclick={handleSyncRoutes}
+					disabled={syncing}
+					class="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:hover:bg-gray-700"
+					title="Discover routes from VPN server"
+				>
+					{#if syncing}
+						<Loader2 class="h-4 w-4 animate-spin" />
+						Syncing...
+					{:else}
+						<RefreshCw class="h-4 w-4" />
+						Sync Routes
+					{/if}
+				</button>
+			</div>
+			<RouteList routes={effectiveRoutes} vpnInterface={status?.interface} />
 		</div>
 
 		<!-- DNS Entries -->
@@ -327,4 +387,14 @@
 	open={showOTP}
 	onSubmit={handleOTPSubmit}
 	onCancel={handleOTPCancel}
+/>
+
+<OTPModal
+	{vpnName}
+	open={showSyncOTP}
+	onSubmit={handleSyncOTPSubmit}
+	onCancel={handleSyncOTPCancel}
+	title="Sync Routes for {vpnName}"
+	buttonText="Sync Routes"
+	loadingText="Syncing..."
 />

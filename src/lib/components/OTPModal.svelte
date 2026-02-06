@@ -6,14 +6,27 @@
 		open: boolean;
 		onSubmit: (token: string) => Promise<void>;
 		onCancel: () => void;
+		title?: string;
+		buttonText?: string;
+		loadingText?: string;
 	}
 
-	let { vpnName, open, onSubmit, onCancel }: Props = $props();
+	let {
+		vpnName,
+		open,
+		onSubmit,
+		onCancel,
+		title,
+		buttonText = 'Connect',
+		loadingText = 'Connecting...'
+	}: Props = $props();
 
 	let token = $state('');
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 	let inputRef: HTMLInputElement | undefined = $state();
+
+	const modalTitle = $derived(title ?? `Enter OTP for ${vpnName}`);
 
 	$effect(() => {
 		if (open) {
@@ -79,7 +92,7 @@
 			<div class="mb-4 flex items-center justify-between">
 				<h2 id="otp-title" class="flex items-center gap-2 text-lg font-semibold">
 					<Key class="h-5 w-5 text-blue-500" />
-					Enter OTP for {vpnName}
+					{modalTitle}
 				</h2>
 				<button
 					onclick={onCancel}
@@ -137,9 +150,9 @@
 					>
 						{#if loading}
 							<Loader2 class="h-4 w-4 animate-spin" />
-							Connecting...
+							{loadingText}
 						{:else}
-							Connect
+							{buttonText}
 						{/if}
 					</button>
 				</div>

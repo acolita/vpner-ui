@@ -5,6 +5,7 @@ export interface VPNProfile {
 	auto_connect: boolean;
 	otp_required: boolean;
 	routes: Route[];
+	discovered_routes?: Route[];
 	dns: DNSEntry[];
 	proxy: ProxyEntry[];
 	aliases: AliasEntry[];
